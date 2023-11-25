@@ -39,7 +39,7 @@ def wait_for_run_completion(thread_id, run_id):
   """
   while True:
       # Wait before checking the run status
-      time.sleep(5)
+      time.sleep(3)
       # Retrieve the current status of the run
       run = client.beta.threads.runs.retrieve(
           thread_id=thread_id,
@@ -111,14 +111,21 @@ def create_new_thread():
   anvil.server.session["thread_id"] = thread.id
 
 @anvil.server.callable
+def reset_conversation():
+  # Reset or initialize the conversation session variable
+  anvil.server.session["conversation"] = [
+      {"role": "user", "value": "What is the core assumption of the Science of the Positive?"},
+      {"role": "assistant", "value": "The Positive exists."}
+  ]
+  return anvil.server.session["conversation"]
+
+@anvil.server.callable
 def get_conversation():
   # Check to see if the conversation is stored in the server session
   if "conversation" not in anvil.server.session:
-      # If not, initialize a starter conversation
-      anvil.server.session["conversation"] = {
-          "past_user_msgs": ["What is the core assumption of the Science of the Positive?"],
-          "past_asst_msgs": ["The positive exists."]
-      }
+      # If not, initialize an empty
+      anvil.server.session["conversation"] = []
+  
   # Return the current state of the conversation
   return anvil.server.session["conversation"]
 
@@ -165,17 +172,16 @@ def send_message(user_msg):
       order="asc"
   )
   messages = thread_messages.data
-  print(messages)
-
+  
   extracted_messages = []
   for message in messages:
     role = message.role
     value = message.content[0].text.value if message.content else None
     extracted_messages.append({"role": role, "value": value})
   messages = extracted_messages
-  
+    
   # Update the conversation in the server session with the
   # new state returned by the OpenAI Assistant
   anvil.server.session["conversation"] = messages
-  print(anvil.server.session["conversation"])
-  return messages
+  
+  return anvil.server.session['conversation']
