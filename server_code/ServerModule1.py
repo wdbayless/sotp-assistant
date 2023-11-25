@@ -131,57 +131,72 @@ def get_conversation():
 
 @anvil.server.callable
 def send_message(user_msg):
-  # Fetch the thread_id session variable
-  thread_id = anvil.server.session.get("thread_id")
-  if not thread_id:
-    raise Exception("Thread ID not found in session.")
-  # Fetches the current conversation state
-  conversation = get_conversation()
-  # Add the user's message to the current OpenAI thread
-  message = client.beta.threads.messages.create(
-      thread_id=thread_id,
-      role="user",
-      content=user_msg,
-  )
-  # Initiate a run which process the user's message and
-  # generates a response
-  run = client.beta.threads.runs.create(
-      thread_id=thread_id,
-      assistant_id=assistant_id,
-  )
-  # Wait for the run to complete and retrieve the final status
-  run = wait_for_run_completion(
-      thread_id,
-      run.id
-  )
-  # If the run requires action, submit tool outputs and
-  # wait again for the run to complete
-  if run.status == "requires_action":
-    run = submit_tool_outputs(
-        thread_id,
-        run.id,
-        run.required_action.submit_tool_outputs.tool_calls
+    # Start a background task for message processing
+    task = anvil.server.launch_background_task('process_message', user_msg)
+    return task.get_id()
+
+@anvil.server.background_task
+def process_message(user_msg):
+    # Fetch the thread_id session variable
+    thread_id = anvil.server.session.get("thread_id")
+    if not thread_id:
+        raise Exception("Thread ID not found in session.")
+    # Fetches the current conversation state
+    conversation = get_conversation()
+    # Add the user's message to the current OpenAI thread
+    message = client.beta.threads.messages.create(
+        thread_id=thread_id,
+        role="user",
+        content=user_msg,
     )
+    # Initiate a run which process the user's message and
+    # generates a response
+    run = client.beta.threads.runs.create(
+        thread_id=thread_id,
+        assistant_id=assistant_id,
+    )
+    # Wait for the run to complete and retrieve the final status
     run = wait_for_run_completion(
         thread_id,
         run.id
     )
-  # Retrieve the user and assistant messages from the thread
-  thread_messages = client.beta.threads.messages.list(
-      thread_id=thread_id,
-      order="asc"
-  )
-  messages = thread_messages.data
-  
-  extracted_messages = []
-  for message in messages:
-    role = message.role
-    value = message.content[0].text.value if message.content else None
-    extracted_messages.append({"role": role, "value": value})
-  messages = extracted_messages
-    
-  # Update the conversation in the server session with the
-  # new state returned by the OpenAI Assistant
-  anvil.server.session["conversation"] = messages
-  
-  return anvil.server.session['conversation']
+    # If the run requires action, submit tool outputs and
+    # wait again for the run to complete
+    if run.status == "requires_action":
+        run = submit_tool_outputs(
+            thread_id,
+            run.id,
+            run.required_action.submit_tool_outputs.tool_calls
+        )
+        run = wait_for_run_completion(
+            thread_id,
+            run.id
+        )
+    # Retrieve the user and assistant messages from the thread
+    thread_messages = client.beta.threads.messages.list(
+        thread_id=thread_id,
+        order="asc"
+    )
+    messages = thread_messages.data
+
+    extracted_messages = []
+    for message in messages:
+        role = message.role
+        value = message.content[0].text.value if message.content else None
+        extracted_messages.append({"role": role, "value": value})
+    messages = extracted_messages
+
+    # Update the conversation in the server session with the
+    # new state returned by the OpenAI Assistant
+    anvil.server.session["conversation"] = messages
+
+    # Store the result in a way accessible by the polling endpoint
+    anvil.server.session['task_result'] = anvil.server.session['conversation']
+
+@anvil.server.callable
+def is_task_complete(task_id):
+    return anvil.server.task_status(task_id)['status'] == 'completed'
+
+@anvil.server.callable
+def get_task_result(task_id):
+    return anvil.server.session.get('task_result', [])

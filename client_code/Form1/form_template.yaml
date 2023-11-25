@@ -1,7 +1,7 @@
 is_package: true
 container:
   type: HtmlTemplate
-  properties: {html: '@theme:standard-page.html'}
+  properties: {html: '@theme:standard-page.html', visible: true}
 components:
 - type: ColumnPanel
   properties: {col_widths: '{}'}
@@ -42,6 +42,10 @@ components:
       properties: {text: This is version 0.1}
       type: Label
       layout_properties: {grid_position: 'UQPMVX,ODROEO'}
+    - name: timer_1
+      properties: {interval: null}
+      type: Timer
+      layout_properties: {grid_position: 'FUWMRL,CQEOAF'}
 - type: FlowPanel
   properties: {}
   name: navbar_links

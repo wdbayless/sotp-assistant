@@ -36,22 +36,27 @@ class Form1(Form1Template):
 
     def send_btn_click(self, **event_args):
         """This method is called when the button is clicked"""
-        # Send the contents of the new message box to the server
-        self.conversation = anvil.server.call(
-            'send_message',
+        task_id = anvil.server.call(
+           'send_message',
             self.new_message_box.text,
-        )
-        
+         )
+        # Store the task ID and start polling
+        self.task_id = task_id
+        self.timer_1.interval = 2  # Start the timer with 2-second intervals
+
         # Clear the contents of the new message box
         self.new_message_box.text = ""
 
-        # Refresh the conversation display
-        self.refresh_conversation()
-
         # Scroll down to ensure the send message button is in view
         self.send_btn.scroll_into_view()
-        
 
+    def timer_1_tick(self, **event_args):
+        """This method is called on each Timer tick"""
+        if anvil.server.call('is_task_complete', self.task_id):
+           self.timer_1.interval = 0  # Stop the timer
+           self.conversation = anvil.server.call('get_task_result', self.task_id)
+           self.refresh_conversation()
+   
     def new_message_box_pressed_enter(self, **event_args):
         """This method is called when the user presses Enter in this text box"""
         self.send_btn_click()
