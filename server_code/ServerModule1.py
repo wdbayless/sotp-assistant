@@ -1,187 +1,102 @@
-# Configuration and ini
+# Configuration and Initialization
 import anvil.secrets
 import anvil.server
 
-# Standard library imports
+OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
+TAVILY_API_KEY = anvil.secrets.get_secret('tavily_api_key')
+ASSISTANT_ID = anvil.secrets.get_secret('sotp_assistant_id')
+
+# Import necessary libraries
 import time
 import json
-
-# OpenAI library imports
-import openai
 from openai import OpenAI
-
-# Tavily library import
 from tavily import TavilyClient
 
-# Initialize clients with API authorizations
-OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
-client = OpenAI(api_key=OPENAI_API_KEY)
+# Define OpenAIClient class
+class OpenAIClient:
+    def __init__(self, api_key):
+        self.client = OpenAI(api_key=api_key)
 
-tavily_api_key = anvil.secrets.get_secret('tavily_api_key')
-tavily_client = TavilyClient(tavily_api_key)
+    def create_thread(self):
+        return self.client.beta.threads.create()
 
-# Retrieve OpenAI Assistant ID
-assistant_id = anvil.secrets.get_secret('sotp_assistant_id')
+    def send_message(self, thread_id, user_msg):
+        return self.client.beta.threads.messages.create(thread_id=thread_id, role="user", content=user_msg)
 
-def wait_for_run_completion(thread_id, run_id):
-  """
-  Wait for a specified run to complete.
-  
-  Continuously checks the status of a run and returns once
-  the run is completed.
-  
-  Args:
-  thread_id (str): The ID of the thread.
-  run_id (str): The ID of the run.
-  
-  Returns:
-  object: The final status of the run.
-  """
-  while True:
-      # Wait before checking the run status
-      time.sleep(3)
-      # Retrieve the current status of the run
-      run = client.beta.threads.runs.retrieve(
-          thread_id=thread_id,
-          run_id=run_id
-      )
-      # Return the status upon completion of the run
-      if run.status in ['completed', 'failed', 'requires_action']:
-        return run
+    def initiate_run(self, thread_id, assistant_id):
+        return self.client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant_id)
 
-def submit_tool_outputs(thread_id, run_id, tools_to_call):
-    """
-    Handle the submission of tool outputs.
+    def get_thread_messages(self, thread_id):
+        return self.client.beta.threads.messages.list(thread_id=thread_id, order="asc")
 
-    Processes the outputs of specified tools and submits them as part of a run.
+# Define TavilyClientWrapper class
+class TavilyClientWrapper:
+    def __init__(self, api_key):
+        self.client = TavilyClient(api_key)
 
-    Args:
-    thread_id (str): The thread ID associated with the run.
-    run_id (str): The run ID for which the outputs are being submitted.
-    tools_to_call (list): A list of tools to call and process.
+    def search(self, query):
+        return self.client.get_search_context(query, search_depth="advanced", max_tokens=8000)
 
-    Returns:
-    object: Response from submitting the tool outputs.
-    """
+# Instantiate clients
+openai_client = OpenAIClient(OPENAI_API_KEY)
+tavily_client = TavilyClientWrapper(TAVILY_API_KEY)
+
+# Utility functions
+def wait_for_run_completion(client, thread_id, run_id):
+    while True:
+        time.sleep(3)
+        run = client.client.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run_id)
+        if run.status in ['completed', 'failed', 'requires_action']:
+            return run
+
+def submit_tool_outputs(client, thread_id, run_id, tools_to_call):
     tool_output_array = []
     for tool in tools_to_call:
         output = None
-        tool_call_id = tool.id
-        function_name = tool.function.name
-        function_args = tool.function.arguments
-
-        # Perform tavily_search if the function name matches
-        if function_name == "tavily_search":
-            output = tavily_search(query=json.loads(function_args)["query"])
-
-        # Append the output to the tool_output_array if it exists
+        if tool.function.name == "tavily_search":
+            output = tavily_client.search(json.loads(tool.function.arguments)["query"])
         if output:
-            tool_output_array.append({"tool_call_id": tool_call_id, "output": output})
+            tool_output_array.append({"tool_call_id": tool.id, "output": output})
 
-    # Submit the collected tool outputs
-    return client.beta.threads.runs.submit_tool_outputs(
-        thread_id=thread_id,
-        run_id=run_id,
-        tool_outputs=tool_output_array
-    )
+    return client.client.beta.threads.runs.submit_tool_outputs(thread_id=thread_id, run_id=run_id, tool_outputs=tool_output_array)
 
-def tavily_search(query):
-    """
-    Perform a Tavily search with a specified query.
-
-    Args:
-    query (str): The search query string.
-
-    Returns:
-    object: The search result returned by the tavily_client.
-    """
-    # Perform a search using tavily_client with specified parameters
-    search_result = tavily_client.get_search_context(
-        query,
-        search_depth="advanced",
-        max_tokens=8000
-    )
-    return search_result
-
+# Anvil server callable functions
 @anvil.server.callable
 def create_new_thread():
-  # Create a new OpenAI thread
-  thread = client.beta.threads.create()
-  # Save the thread_id as a session variable
-  anvil.server.session["thread_id"] = thread.id
+    thread = openai_client.create_thread()
+    anvil.server.session["thread_id"] = thread.id
 
 @anvil.server.callable
 def reset_conversation():
-  # Reset or initialize the conversation session variable
-  anvil.server.session["conversation"] = [
-      {"role": "user", "value": "What is the core assumption of the Science of the Positive?"},
-      {"role": "assistant", "value": "The Positive exists."}
-  ]
-  return anvil.server.session["conversation"]
+    anvil.server.session["conversation"] = [
+        {"role": "user", "value": "What is the core assumption of the Science of the Positive?"},
+        {"role": "assistant", "value": "The Positive exists."}
+    ]
+    return anvil.server.session["conversation"]
 
 @anvil.server.callable
 def get_conversation():
-  # Check to see if the conversation is stored in the server session
-  if "conversation" not in anvil.server.session:
-      # If not, initialize an empty
-      anvil.server.session["conversation"] = []
-  
-  # Return the current state of the conversation
-  return anvil.server.session["conversation"]
+    if "conversation" not in anvil.server.session:
+        anvil.server.session["conversation"] = []
+    return anvil.server.session["conversation"]
 
 @anvil.server.callable
 def send_message(user_msg):
-  # Fetch the thread_id session variable
-  thread_id = anvil.server.session.get("thread_id")
-  if not thread_id:
-    raise Exception("Thread ID not found in session.")
-  # Fetches the current conversation state
-  conversation = get_conversation()
-  # Add the user's message to the current OpenAI thread
-  message = client.beta.threads.messages.create(
-      thread_id=thread_id,
-      role="user",
-      content=user_msg,
-  )
-  # Initiate a run which process the user's message and
-  # generates a response
-  run = client.beta.threads.runs.create(
-      thread_id=thread_id,
-      assistant_id=assistant_id,
-  )
-  # Wait for the run to complete and retrieve the final status
-  run = wait_for_run_completion(
-      thread_id,
-      run.id
-  )
-  # If the run requires action, submit tool outputs and
-  # wait again for the run to complete
-  if run.status == "requires_action":
-    run = submit_tool_outputs(
-        thread_id,
-        run.id,
-        run.required_action.submit_tool_outputs.tool_calls
-    )
-    run = wait_for_run_completion(
-        thread_id,
-        run.id
-    )
-  # Retrieve the user and assistant messages from the thread
-  thread_messages = client.beta.threads.messages.list(
-      thread_id=thread_id,
-      order="asc"
-  )
-  messages = thread_messages.data
-  
-  extracted_messages = []
-  for message in messages:
-    role = message.role
-    value = message.content[0].text.value if message.content else None
-    extracted_messages.append({"role": role, "value": value})
-  messages = extracted_messages
-    
-  # Update the conversation in the server session with the
-  # new state returned by the OpenAI Assistant
-  anvil.server.session["conversation"] = messages
-  
-  return anvil.server.session['conversation']
+    thread_id = anvil.server.session.get("thread_id")
+    if not thread_id:
+        raise Exception("Thread ID not found in session.")
+    conversation = get_conversation()
+    message = openai_client.send_message(thread_id, user_msg)
+
+    run = openai_client.initiate_run(thread_id, ASSISTANT_ID)
+    run = wait_for_run_completion(openai_client, thread_id, run.id)
+
+    if run.status == "requires_action":
+        run = submit_tool_outputs(openai_client, thread_id, run.id, run.required_action.submit_tool_outputs.tool_calls)
+        run = wait_for_run_completion(openai_client, thread_id, run.id)
+
+    thread_messages = openai_client.get_thread_messages(thread_id)
+    messages = [{"role": m.role, "value": m.content[0].text.value if m.content else None} for m in thread_messages.data]
+
+    anvil.server.session["conversation"] = messages
+    return messages
