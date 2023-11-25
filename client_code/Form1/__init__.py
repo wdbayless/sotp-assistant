@@ -36,7 +36,7 @@ class Form1(Form1Template):
 
     def send_message(self, message):
         """Sends a message to the server."""
-        self.conversation = anvil.server.call(send_message', message))
+        self.conversation = anvil.server.call('send_message', message)
 
     def clear_message_box(self):
         """Clears the new message input box."""
