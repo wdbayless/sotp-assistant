@@ -1,6 +1,6 @@
 container:
   type: ColumnPanel
-  properties: {col_widths: '{}'}
+  properties: {col_widths: '{}', visible: true}
 components:
 - type: FlowPanel
   properties: {}
