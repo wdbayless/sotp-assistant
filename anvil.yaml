@@ -1,0 +1,20 @@
+correct_dependency_ids: {}
+dependencies: []
+services:
+- source: /runtime/services/tables.yml
+  client_config: {}
+  server_config: {}
+- source: /runtime/services/anvil/secrets.yml
+  client_config: {}
+  server_config: {}
+package_name: Christmas_Chatbot
+allow_embedding: true
+name: Clone of Christmas Chatbot
+runtime_options: {version: 2, client_version: '3', server_version: python3-full, server_spec: null}
+startup_form: Form1
+db_schema: {}
+secrets:
+  api_token:
+    value: {? '' : 0GlIGyYgSlpJywMMEc+Ghe0JjAdS39Uw7ClXHftd2JgrsAUJ53lMYwt3oAS7Xc2PYtvfJ08mS+TJXPdLv2P11xiMyzxYX9jrhEBIaj91KROv047JkanqHs/PX58rKoX/mIq3nGO2LWC0j2XCrNQzv55sCW9OzIOJcmUMKSN41aqWo1Et}
+    type: secret
+renamed: true
