@@ -161,10 +161,21 @@ def send_message(user_msg):
     )
   # Retrieve the user and assistant messages from the thread
   thread_messages = client.beta.threads.messages.list(
-      thread_id=thread_id
+      thread_id=thread_id,
+      order="asc"
   )
   messages = thread_messages.data
+  print(messages)
+
+  extracted_messages = []
+  for message in messages:
+    role = message.role
+    value = message.content[0].text.value if message.content else None
+    extracted_messages.append({"role": role, "value": value})
+  messages = extracted_messages
+  
   # Update the conversation in the server session with the
   # new state returned by the OpenAI Assistant
   anvil.server.session["conversation"] = messages
+  print(anvil.server.session["conversation"])
   return messages
