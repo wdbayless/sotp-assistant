@@ -9,12 +9,24 @@ services:
   server_config: {}
 package_name: Christmas_Chatbot
 allow_embedding: true
-name: Clone of Christmas Chatbot
-runtime_options: {version: 2, client_version: '3', server_version: python3-full, server_spec: null}
+name: SOTP Assistant
+runtime_options:
+  version: 2
+  client_version: '3'
+  server_version: python3-sandbox
+  server_spec: {base: python310-standard}
+  server_spec_disabled: {requirements: '', base: python310-minimal}
+metadata: {title: SOTP Assistant, description: The SOTP Assistant is powered by OpenAI.}
 startup_form: Form1
 db_schema: {}
 secrets:
-  api_token:
-    value: {? '' : 0GlIGyYgSlpJywMMEc+Ghe0JjAdS39Uw7ClXHftd2JgrsAUJ53lMYwt3oAS7Xc2PYtvfJ08mS+TJXPdLv2P11xiMyzxYX9jrhEBIaj91KROv047JkanqHs/PX58rKoX/mIq3nGO2LWC0j2XCrNQzv55sCW9OzIOJcmUMKSN41aqWo1Et}
+  tavily_api_key:
+    value: {ANK2UV6CBNZEBFBH: 9Xe2xclddbQxV5Wgpbge/aY271R2TD7xbyEiAQBBMYMN7iREJ6uPzN2Fd9nW5dCshu6c19OJlOHPJ2WsoPrUfqgt2TNh1O940IihCUrn4pdbt9TnJPtLp+RO4yyFYu2eKuUTR/WrJIvIPGFNOzrRhtZd4/BsHUmofer5L2nLf8tJFaAW}
+    type: secret
+  sotp_assistant_id:
+    value: {ANK2UV6CBNZEBFBH: oY81KRzDly8DxHEC0Po2fZAFNbTQ9TBpmKGNaYrUNHxZfDx5ceoF6GS6U73bY97ZUghXvaXbGMl5mTCVcSt9Gd9R7HN/uN2lw+GUJqET50JOcKa7Fi9Ndbb6OdAOoI3xpr8VHyWcGSb3liDV27hOnXiGOfwp2/iUMt0++w==}
+    type: secret
+  openai_api_key:
+    value: {ANK2UV6CBNZEBFBH: q9061Kx1PD8+CP+xevPAnfGNFnr2J84GcJGBiVoYr3rcy/NobcTb9YJx2YpZvAynddnGbshZNK+T+2l2iPQ8u6wVuhu4NHJvKCC3XnruyutlWo99z856VOQFdOJwFF8bouw6XMypqIItuEeLUVmnl1wW05hHDABMuLqaLZtt3G5Zk7qLYsWvd+30IFNURTML+2k=}
     type: secret
 renamed: true
