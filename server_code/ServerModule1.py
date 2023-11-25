@@ -1,4 +1,4 @@
-# Import Anvil libraries
+# Configuration and ini
 import anvil.secrets
 import anvil.server
 
