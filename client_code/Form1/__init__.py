@@ -14,7 +14,7 @@ class Form1(Form1Template):
         self.refresh_conversation()
 
     def initialize_conversation(self):
-        """Initialize a new OpenAI thread and resets the conversation."""
+        """Initialize a new OpenAI thread and reset the conversation."""
         anvil.server.call('create_new_thread')
         self.conversation = anvil.server.call('reset_conversation')
 
