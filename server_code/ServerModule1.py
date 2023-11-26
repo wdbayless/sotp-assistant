@@ -82,14 +82,16 @@ def get_conversation():
 
 @anvil.server.callable
 def launch_send_message_task(message):
-    task = anvil.server.launch_background_task('send_message_task', message)
-    return task.get_id()
-  
-@anvil.server.background_task
-def send_message_task(user_msg):
     thread_id = anvil.server.session.get("thread_id")
     if not thread_id:
         raise Exception("Thread ID not found in session.")
+    task = anvil.server.launch_background_task('send_message_task', message, thread_id)
+    return task.get_id()
+  
+@anvil.server.background_task
+def send_message_task(user_msg, thread_id):
+    if not thread_id:
+        raise Exception("Thread ID not found in task state.")
     conversation = get_conversation()
     message = openai_client.send_message(thread_id, user_msg)
 
