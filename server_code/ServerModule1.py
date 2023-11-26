@@ -90,6 +90,7 @@ def launch_send_message_task(message):
   
 @anvil.server.background_task
 def send_message_task(user_msg, thread_id):
+    print(f"Executing send_message_task with message: {user_msg} and thread_id: {thread_id}")
     if not thread_id:
         raise Exception("Thread ID not found in task state.")
     conversation = get_conversation()
@@ -110,10 +111,12 @@ def send_message_task(user_msg, thread_id):
 @anvil.server.callable
 def check_task_status(task_id):
     task = anvil.server.get_background_task(task_id)
+    print(f"Task {task_id} status: {task.get_termination_status()}")
     return task.get_termination_status()
 
 @anvil.server.callable
 def get_background_task_result(task_id):
+    print(f"Retrieving result for task {task_id}")
     task = anvil.server.get_background_task(task_id)
     if task is None or not task.is_completed:
         return None

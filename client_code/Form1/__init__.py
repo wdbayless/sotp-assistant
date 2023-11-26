@@ -30,14 +30,18 @@ class Form1(Form1Template):
        
     def send_btn_click(self, **event_args):
         """Handles the event when the send button is clicked"""
+        print("Send button clicked.")
         task_id = anvil.server.call('launch_send_message_task', self.new_message_box.text)
+        print(f"Background task launched with task ID: {task_id}")
         self.task_id = task_id # Store the task ID
         self.clear_message_box()
         self.check_task_status()
 
     def check_task_status(self):
         """Checks the status of the background task and updates UI accordingly."""
+        print("Checking task status...")
         task_status = anvil.server.call('check_task_status', self.task_id)
+        print(f"Task status: {task_status}")
 
         if task_status == "completed":
            self.update_conversation_from_task()
@@ -47,7 +51,9 @@ class Form1(Form1Template):
 
     def update_conversation_from_task(self):
         """Updates the conversation with the result from the background task."""
+        print("Updating conversation from background task.")
         updated_conversation = anvil.server.call('get_background_task_result', self.task_id)
+        print(f"Updated conversation: {updated_conversation}")
         if updated_conversation is not None:
             self.conversation = updated_conversation
             self.refresh_conversation()
