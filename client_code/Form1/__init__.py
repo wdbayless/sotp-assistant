@@ -19,8 +19,9 @@ class Form1(Form1Template):
         self.conversation = anvil.server.call('reset_conversation')
 
     def refresh_conversation(self):
-        """Updates the interface with the current state of the conversation."""
-        messages = self.format_conversation((self.conversation))
+        """Fetches the updated conversation and updated the UI."""
+        self.conversation = anvil.server.call('get_conversation')
+        messages = self.format_conversation(self.conversation)
         self.repeating_panel_1.items = messages
 
     def format_conversation(self, conversation):
@@ -35,17 +36,22 @@ class Form1(Form1Template):
         self.check_task_status()
 
     def check_task_status(self):
-        """Call the server function and handle the response"""
+        """Checks the status of the background task and updates UI accordingly."""
         task_status = anvil.server.call('check_task_status', self.task_id)
-        self.on_status_check_complete(task_status)
 
-    def on_status_check_complete(self, task_status):
         if task_status == "completed":
+           self.update_conversation_from_task()
+        elif task_status == "running":
+           # Re-check after some delay if the task is still running
+            anvil.js.call_js('setTimeout', self.check_task_status, 1000)
+
+    def update_conversation_from_task(self):
+        """Updates the conversation with the result from the background task."""
+        updated_conversation = anvil.server.call('get_background_task_result', self.task_id)
+        if updated_conversation is not None:
+            self.conversation = updated_conversation
             self.refresh_conversation()
             self.scroll_to_bottom()
-        elif task_status == "running":
-            # Re-check after some delay if task is still running
-            anvil.js.call_js('setTimeout', self.check_task_status, 1000)
 
     def send_message(self, message):
         """Sends a message to the server."""

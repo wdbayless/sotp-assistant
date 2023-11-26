@@ -105,10 +105,16 @@ def send_message_task(user_msg, thread_id):
     thread_messages = openai_client.get_thread_messages(thread_id)
     messages = [{"role": m.role, "value": m.content[0].text.value if m.content else None} for m in thread_messages.data]
 
-    anvil.server.session["conversation"] = messages
     return messages
 
 @anvil.server.callable
 def check_task_status(task_id):
     task = anvil.server.get_background_task(task_id)
     return task.get_termination_status()
+
+@anvil.server.callable
+def get_background_task_result(task_id):
+    task = anvil.server.get_background_task(task_id)
+    if task is None or not task.is_completed:
+        return None
+    return task.get_return_value()
