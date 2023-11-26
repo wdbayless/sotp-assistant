@@ -90,29 +90,54 @@ def launch_send_message_task(message):
   
 @anvil.server.background_task
 def send_message_task(user_msg, thread_id):
-    print(f"Executing send_message_task with message: {user_msg} and thread_id: {thread_id}")
-    if not thread_id:
-        raise Exception("Thread ID not found in task state.")
-    conversation = get_conversation()
-    message = openai_client.send_message(thread_id, user_msg)
+    try:
+        # Log the start of the task
+        print(f"Starting send_message_task with message: '{user_msg}' and thread_id: '{thread_id}'")
 
-    run = openai_client.initiate_run(thread_id, ASSISTANT_ID)
-    run = wait_for_run_completion(openai_client, thread_id, run.id)
+        # Update the task state to indicate it's processing
+        anvil.server.task_state['status'] = 'processing'
 
-    if run.status == "requires_action":
-        run = submit_tool_outputs(openai_client, thread_id, run.id, run.required_action.submit_tool_outputs.tool_calls)
+        # Send the message and handle the OpenAI interaction
+        if not thread_id:
+            raise Exception("Thread ID not found in task state.")
+        conversation = get_conversation()
+        message = openai_client.send_message(thread_id, user_msg)
+
+        run = openai_client.initiate_run(thread_id, ASSISTANT_ID)
         run = wait_for_run_completion(openai_client, thread_id, run.id)
 
-    thread_messages = openai_client.get_thread_messages(thread_id)
-    messages = [{"role": m.role, "value": m.content[0].text.value if m.content else None} for m in thread_messages.data]
+        if run.status == "requires_action":
+            run = submit_tool_outputs(openai_client, thread_id, run.id, run.required_action.submit_tool_outputs.tool_calls)
+            run = wait_for_run_completion(openai_client, thread_id, run.id)
 
-    return messages
+        thread_messages = openai_client.get_thread_messages(thread_id)
+        messages = [{"role": m.role, "value": m.content[0].text.value if m.content else None} for m in thread_messages.data]
+
+        # Update the task state to store the result and indicate completion
+        anvil.server.task_state['result'] = messages
+        anvil.server.task_state['status'] = 'completed'
+
+        # Log the completion of the task
+        print("send_message_task completed successfully.")
+
+    except Exception as e:
+        # Log the error and update the task state
+        print(f"Error in send_message_task: {e}")
+        anvil.server.task_state['status'] = 'error'
+        anvil.server.task_state['error_message'] = str(e)
 
 @anvil.server.callable
-def check_task_status(task_id):
+def get_task_status(task_id):
+    print(f"get_task_status called with task_id: {task_id}")
     task = anvil.server.get_background_task(task_id)
-    print(f"Task {task_id} status: {task.get_termination_status()}")
-    return task.get_termination_status()
+
+    if task is None:
+        print(f"No task found for task_id: {task_id}")
+        return None
+
+    task_state = task.get_state()
+    print(f"Task state for task_id {task_id}: {task_state}")
+    return task_state
 
 @anvil.server.callable
 def get_background_task_result(task_id):
@@ -120,4 +145,9 @@ def get_background_task_result(task_id):
     task = anvil.server.get_background_task(task_id)
     if task is None or not task.is_completed:
         return None
-    return task.get_return_value()
+    try:
+        # Retrieve the 'result' from the task's state
+        return task.get_state()['result']
+    except Exception as e:
+        print(f"Error retrieving task result: {e}")
+        return None

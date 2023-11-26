@@ -20,14 +20,21 @@ class Form1(Form1Template):
 
     def refresh_conversation(self):
         """Fetches the updated conversation and updated the UI."""
+        print("Refreshing conversation in UI.")
         self.conversation = anvil.server.call('get_conversation')
+        print(f"Conversation received for refresh: {self.conversation}")
         messages = self.format_conversation(self.conversation)
+        print(f"Formatted messages for UI: {messages}")
         self.repeating_panel_1.items = messages
-
+        print("UI conversation refreshed.")
+    
     def format_conversation(self, conversation):
         """Formats the conversation messages for display."""
-        return [{"from": message["role"], "text": message["value"]} for message in conversation]
-       
+        print(f"Formatting conversation: {conversation}")
+        formatted = [{"from": message["role"], "text": message["value"]} for message in conversation]
+        print(f"Formatted conversation: {formatted}")
+        return formatted
+
     def send_btn_click(self, **event_args):
         """Handles the event when the send button is clicked"""
         print("Send button clicked.")
@@ -38,16 +45,29 @@ class Form1(Form1Template):
         self.check_task_status()
 
     def check_task_status(self):
-        """Checks the status of the background task and updates UI accordingly."""
-        print("Checking task status...")
-        task_status = anvil.server.call('check_task_status', self.task_id)
-        print(f"Task status: {task_status}")
+        try:
+            # Request the task state from the server
+            task_status = anvil.server.call('get_task_status', self.task_id)
+            print(f"Received task status: {task_status}")
+    
+            if task_status.get('status') is None:
+                print("Task status is None.")
+                   
+            elif task_status.get('status') == 'completed':
+                print("Task completed. Updating conversation.")
+                self.update_conversation_from_task()
+    
+            elif task_status.get('status') == 'processing':
+                print("Task still processing. Will check again.")
+                anvil.js.call_js('setTimeout', self.check_task_status, 1000)  # Check again after 1 second
+    
+            elif task_status.get('status') == 'error':
+                error_message = task_status.get('error_message', 'Unknown error')
+                print(f"Error in task: {error_message}")
 
-        if task_status == "completed":
-           self.update_conversation_from_task()
-        elif task_status == "running":
-           # Re-check after some delay if the task is still running
-            anvil.js.call_js('setTimeout', self.check_task_status, 1000)
+        except Exception as e:
+            print(f"Error while checking task status: {e}")
+            # Implement error handling for issues in checking the task status
 
     def update_conversation_from_task(self):
         """Updates the conversation with the result from the background task."""
