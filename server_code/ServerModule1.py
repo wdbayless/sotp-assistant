@@ -75,12 +75,6 @@ def reset_conversation():
     return anvil.server.session["conversation"]
 
 @anvil.server.callable
-def get_conversation():
-    if "conversation" not in anvil.server.session:
-        anvil.server.session["conversation"] = []
-    return anvil.server.session["conversation"]
-
-@anvil.server.callable
 def launch_send_message_task(message):
     thread_id = anvil.server.session.get("thread_id")
     if not thread_id:
@@ -100,7 +94,7 @@ def send_message_task(user_msg, thread_id):
         # Send the message and handle the OpenAI interaction
         if not thread_id:
             raise Exception("Thread ID not found in task state.")
-        conversation = get_conversation()
+        # conversation = get_conversation()
         message = openai_client.send_message(thread_id, user_msg)
 
         run = openai_client.initiate_run(thread_id, ASSISTANT_ID)

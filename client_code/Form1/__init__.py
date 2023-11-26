@@ -21,7 +21,6 @@ class Form1(Form1Template):
     def refresh_conversation(self):
         """Fetches the updated conversation and updated the UI."""
         print("Refreshing conversation in UI.")
-        self.conversation = anvil.server.call('get_conversation')
         print(f"Conversation received for refresh: {self.conversation}")
         messages = self.format_conversation(self.conversation)
         print(f"Formatted messages for UI: {messages}")
