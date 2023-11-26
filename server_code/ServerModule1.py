@@ -81,7 +81,12 @@ def get_conversation():
     return anvil.server.session["conversation"]
 
 @anvil.server.callable
-def send_message(user_msg):
+def launch_send_message_task(message):
+    task = anvil.server.launch_background_task('send_message_task', message)
+    return task.get_id()
+  
+@anvil.server.background_task
+def send_message_task(user_msg):
     thread_id = anvil.server.session.get("thread_id")
     if not thread_id:
         raise Exception("Thread ID not found in session.")
@@ -100,3 +105,8 @@ def send_message(user_msg):
 
     anvil.server.session["conversation"] = messages
     return messages
+
+@anvil.server.callable
+def check_task_status(task_id):
+    task = anvil.server.get_background_task(task_id)
+    return task.get_termination_status()

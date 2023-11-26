@@ -29,10 +29,23 @@ class Form1(Form1Template):
        
     def send_btn_click(self, **event_args):
         """Handles the event when the send button is clicked"""
-        self.send_message(self.new_message_box.text)
+        task_id = anvil.server.call('launch_send_message_task', self.new_message_box.text)
+        self.task_id = task_id # Store the task ID
         self.clear_message_box()
-        self.refresh_conversation()
-        self.scroll_to_bottom()
+        self.check_task_status()
+
+    def check_task_status(self):
+        """Call the server function and handle the response"""
+        task_status = anvil.server.call('check_task_status', self.task_id)
+        self.on_status_check_complete(task_status)
+
+    def on_status_check_complete(self, task_status):
+        if task_status == "completed":
+            self.refresh_conversation()
+            self.scroll_to_bottom()
+        elif task_status == "running":
+            # Re-check after some delay if task is still running
+            anvil.js.call_js('setTimeout', self.check_task_status, 1000)
 
     def send_message(self, message):
         """Sends a message to the server."""
