@@ -8,6 +8,14 @@ components:
   name: content_panel
   layout_properties: {slot: default}
   components:
+  - name: rich_text_1
+    properties: {content: 'Welcome! I''m the Science of the Positive research assistant.
+        I''m built using the [OpenAI Assistants API](https://platform.openai.com/docs/assistants/overview)
+        and [Tavily AI](https://tavily.com/). I''m designed to provided informed responses
+        to prompts regarding SOTP, including the execution of synthesis of web research.
+        Consequently, **I may take a minute or two to respond to your prompts**. '}
+    type: RichText
+    layout_properties: {grid_position: 'EXNJOY,BZPXQP'}
   - type: ColumnPanel
     properties: {role: card, col_widths: '{}'}
     name: card_1
