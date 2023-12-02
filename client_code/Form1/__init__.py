@@ -36,12 +36,17 @@ class Form1(Form1Template):
 
     def send_btn_click(self, **event_args):
         """Handles the event when the send button is clicked"""
-        print("Send button clicked.")
-        task_id = anvil.server.call('launch_send_message_task', self.new_message_box.text)
-        print(f"Background task launched with task ID: {task_id}")
-        self.task_id = task_id # Store the task ID
-        self.clear_message_box()
-        self.check_task_status()
+        message_text = self.new_message_text_area.text.strip()
+    
+        if message_text:
+            print("Send button clicked.")
+            task_id = anvil.server.call('launch_send_message_task', message_text)
+            print(f"Background task launched with task ID: {task_id}")
+            self.task_id = task_id  # Store the task ID
+            self.clear_message_box()
+            self.check_task_status()
+        else:
+            print("No message to send.")
 
     def check_task_status(self):
         try:
@@ -84,12 +89,8 @@ class Form1(Form1Template):
 
     def clear_message_box(self):
         """Clears the new message input box."""
-        self.new_message_box.text = ""
+        self.new_message_text_area.text = ""
 
     def scroll_to_bottom(self):
         """Scrolls the view to the bottom."""
         self.send_btn.scroll_into_view()
-
-    def new_message_box_pressed_enter(self, **event_args):
-        """Triggered when Enter is pressed in the message box."""
-        self.send_btn_click()

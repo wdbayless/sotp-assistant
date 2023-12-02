@@ -25,29 +25,20 @@ components:
       properties: {item_template: Form1.ItemTemplate1, spacing_below: medium}
       name: repeating_panel_1
       layout_properties: {grid_position: 'TGYWVY,LGTWST'}
-    - type: FlowPanel
-      properties: {}
-      name: flow_panel_1
-      layout_properties: {grid_position: 'AVGSBJ,SXEYMF'}
-      components:
-      - type: TextBox
-        properties: {role: null, align: left, hide_text: false, tooltip: '', placeholder: Enter your message here.,
-          border: '', enabled: true, foreground: '', visible: true, text: '', font_size: null,
-          font: '', spacing_above: small, type: text, spacing_below: small, italic: false,
-          background: '', bold: false, underline: false}
-        name: new_message_box
-        layout_properties: {grid_position: 'TRAAHO,HPMIKX', expand: true, width: null}
-        event_bindings: {pressed_enter: new_message_box_pressed_enter}
-      - type: Button
-        properties: {role: secondary-color, align: center, tooltip: '', border: '',
-          enabled: true, foreground: '', visible: true, text: Send Message, font_size: null,
-          font: '', spacing_above: small, icon_align: left, spacing_below: small,
-          italic: false, background: '', bold: false, underline: false, icon: 'fa:send'}
-        name: send_btn
-        layout_properties: {grid_position: 'AVGSBJ,SMILST'}
-        event_bindings: {click: send_btn_click}
+    - name: new_message_text_area
+      properties: {height: '', auto_expand: true, placeholder: Enter your prompt here.}
+      type: TextArea
+      layout_properties: {grid_position: 'QWNXHJ,EPJUKT'}
+    - type: Button
+      properties: {role: secondary-color, align: left, tooltip: '', border: '', enabled: true,
+        foreground: '', visible: true, text: Send Prompt, font_size: null, font: '',
+        spacing_above: small, icon_align: left, spacing_below: small, italic: false,
+        background: '', bold: false, underline: false, icon: 'fa:send'}
+      name: send_btn
+      layout_properties: {grid_position: 'PKMNAI,RPKPGR', full_width_row: false}
+      event_bindings: {click: send_btn_click}
     - name: label_1
-      properties: {text: This is version 0.3}
+      properties: {text: This is version 0.4}
       type: Label
       layout_properties: {grid_position: 'UQPMVX,ODROEO'}
 - type: FlowPanel
