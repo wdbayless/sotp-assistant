@@ -28,7 +28,7 @@ components:
     - name: new_message_text_area
       properties: {height: '', auto_expand: true, placeholder: Enter your prompt here.}
       type: TextArea
-      layout_properties: {grid_position: 'QWNXHJ,EPJUKT'}
+      layout_properties: {grid_position: 'SRNCFO,GISVIC'}
     - type: Button
       properties: {role: secondary-color, align: left, tooltip: '', border: '', enabled: true,
         foreground: '', visible: true, text: Send Prompt, font_size: null, font: '',
