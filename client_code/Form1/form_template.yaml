@@ -43,7 +43,7 @@ components:
       type: Button
       layout_properties: {grid_position: 'PKMNAI,HKPRRX'}
     - name: label_1
-      properties: {text: This is version 0.4}
+      properties: {text: This is version 0.5}
       type: Label
       layout_properties: {grid_position: 'UQPMVX,ODROEO'}
 - type: FlowPanel
