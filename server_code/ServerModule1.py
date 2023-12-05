@@ -5,12 +5,14 @@ import anvil.server
 OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
 TAVILY_API_KEY = anvil.secrets.get_secret('tavily_api_key')
 ASSISTANT_ID = anvil.secrets.get_secret('sotp_assistant_id')
+CLOUDCONVERT_API_KEY = anvil.secrets.get_secret('cloudconvert_api_key')
 
 # Import necessary libraries
 import time
 import json
 from openai import OpenAI
 from tavily import TavilyClient
+import cloudconvert
 
 # Define OpenAIClient class
 class OpenAIClient:
@@ -40,6 +42,7 @@ class TavilyClientWrapper:
 # Instantiate clients
 openai_client = OpenAIClient(OPENAI_API_KEY)
 tavily_client = TavilyClientWrapper(TAVILY_API_KEY)
+cloudconvert_client = cloudconvert.configure(api_key='CLOUDCONVERT_API_KEY', sandbox=False)
 
 # Utility functions
 def wait_for_run_completion(client, thread_id, run_id):
@@ -145,3 +148,13 @@ def get_background_task_result(task_id):
     except Exception as e:
         print(f"Error retrieving task result: {e}")
         return None
+
+@anvil.server.callable
+def convert_markdown_to_docx(markdown_text):
+    print("Converting conversation to DOCX")
+    process = cloudconvert_client.convert({
+        "inputformat": "md",
+        "outputformat": "docx",
+        "input": "raw",
+        "file": mar
+    })
