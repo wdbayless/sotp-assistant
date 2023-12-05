@@ -156,5 +156,17 @@ def convert_markdown_to_docx(markdown_text):
         "inputformat": "md",
         "outputformat": "docx",
         "input": "raw",
-        "file": mar
+        "file": markdown_text,
+        "filename": "input.md"
     })
+
+    # Wait for the conversion to finish
+    process.wait()
+
+    # Download the output file
+    output = process.download()
+
+    # Convert the output to Anvil's file format for download
+    return anvil.BlobMedia('application/vnd.openxmlformats-officedocument.wordprocessingm1.document',
+                          output,
+                          name="conversation.docx")

@@ -49,8 +49,6 @@ class Form1(Form1Template):
         else:
             print("No message to send.")
 
-  
-
     def check_task_status(self):
         try:
             # Request the task state from the server
@@ -97,3 +95,12 @@ class Form1(Form1Template):
     def scroll_to_bottom(self):
         """Scrolls the view to the bottom."""
         self.send_btn.scroll_into_view()
+
+    def download_btn_click(self, **event_args):
+      """This method is called when the button is clicked"""
+      # Format the conversation as markdown
+      markdown_text = "\n\n".join([f"**{m['role']}**: {m['value']}" for m in self.conversation])
+
+      # Call the server function to convert and download the .docx file
+      docx_file = anvil.server.call('convert_markdown_to_docx', markdown_text)
+      anvil.media.download(docx_file)
