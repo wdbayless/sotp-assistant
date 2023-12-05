@@ -48,6 +48,16 @@ class Form1(Form1Template):
         else:
             print("No message to send.")
 
+    def download_conversation_as_docx(self, **event_args):
+      """Handles the event when the download conversation button is clicked"""
+      # Format the conversation as markdown
+      markdown_text = "\n\n".join([f"**{m['from']}**: {m['text']}" for m in self.conversation])
+
+      # Call the server function to convert and download the .docx file
+      docx_file = anvil.server.call('convert_markdown_to_docx', markdown_text)
+      anvil.server.download(docx_file)
+      
+
     def check_task_status(self):
         try:
             # Request the task state from the server
