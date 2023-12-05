@@ -1,6 +1,7 @@
 from ._anvil_designer import Form1Template
 from anvil import *
 import anvil.server
+import anvil.media
 
 class Form1(Form1Template):
     def __init__(self, **properties):
@@ -47,6 +48,8 @@ class Form1(Form1Template):
             self.check_task_status()
         else:
             print("No message to send.")
+
+  
 
     def check_task_status(self):
         try:

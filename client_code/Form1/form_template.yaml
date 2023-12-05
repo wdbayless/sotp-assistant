@@ -37,6 +37,11 @@ components:
       name: send_btn
       layout_properties: {grid_position: 'PKMNAI,RPKPGR', full_width_row: false}
       event_bindings: {click: send_btn_click}
+    - name: download_btn
+      properties: {text: Download conversation, role: primary-color, align: right,
+        icon: 'fa:download'}
+      type: Button
+      layout_properties: {grid_position: 'PKMNAI,HKPRRX'}
     - name: label_1
       properties: {text: This is version 0.4}
       type: Label
