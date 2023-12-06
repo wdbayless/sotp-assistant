@@ -77,24 +77,18 @@ def convert_html_to_docx(html_text):
     api_key = CONVERTAPI_KEY
 
     # ConvertAPI HTML to DOCX endpoint
-    url = f"https://v2.convertapi.com/convert/html/to/docx?Secret={CONVERTAPI_KEY}"
+    url = f"https://v2.convertapi.com/convert/html/to/docx?Secret={api_key}"
 
-    # Prepare the payload
-    payload = {
-        "Parameters":
-        [
-            {
-                "Name": "File",
-                "FileValue": {
-                    "Name": 'myfile.html',
-                    'Data': html_text
-                },
-            },
-        ]
-    }
+    # Prepare the request body
+    request_body = {
+        "File": html_text,
+        "FileName": "output" # The file extension will be added automatically
+     }
 
     # Make the POST request
-    response = anvil.http.request(url, method='POST', json=payload, timeout=30)
+    response = anvil.http.request(url,
+                                  method="POST",
+                                  data=request_body)
     # Check response status and handle the file
     if response.status_code == 200:
         return anvil.media.from_bytes(response.content, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', name='output.docx')
