@@ -37,8 +37,13 @@ components:
       name: send_btn
       layout_properties: {grid_position: 'PKMNAI,RPKPGR', full_width_row: false}
       event_bindings: {click: send_btn_click}
+    - name: download_btn
+      properties: {text: Download Conversation, role: primary-color, align: right,
+        icon: 'fa:download'}
+      type: Button
+      layout_properties: {grid_position: 'PKMNAI,VODVYG'}
     - name: label_1
-      properties: {text: This is version 0.4}
+      properties: {text: This is version 0.5}
       type: Label
       layout_properties: {grid_position: 'UQPMVX,ODROEO'}
 - type: FlowPanel
