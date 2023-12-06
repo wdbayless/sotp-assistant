@@ -2,17 +2,19 @@ import anvil.secrets
 import anvil.server
 import anvil.http
 import anvil.media
+import anvil.http
 
 OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
 TAVILY_API_KEY = anvil.secrets.get_secret('tavily_api_key')
 ASSISTANT_ID = anvil.secrets.get_secret('sotp_assistant_id')
+CONVERTAPI_KEY = anvil.secrets.get_secret('convertapi_key')
 
 # Import necessary libraries
 import time
 import json
 from openai import OpenAI
 from tavily import TavilyClient
-from Markdown2docx import Markdown2docx
+import markdown2
 
 # Define OpenAIClient class
 class OpenAIClient:
@@ -61,6 +63,46 @@ def submit_tool_outputs(client, thread_id, run_id, tools_to_call):
             tool_output_array.append({"tool_call_id": tool.id, "output": output})
 
     return client.client.beta.threads.runs.submit_tool_outputs(thread_id=thread_id, run_id=run_id, tool_outputs=tool_output_array)
+
+def markdown_to_html(markdown_text):
+    # Diagnostic print statement
+    print(f"\nmarkdown_text received by markdown_to_html: {markdown_text}")
+    html = markdown2.markdown(markdown_text)
+    return html
+
+def convert_html_to_docx(html_text):
+    # Diagnostic print statement
+    print(f"\nhtml_text received by convert_html_to_docx: {html_text}")
+    # ConvertAPI secret
+    api_key = CONVERTAPI_KEY
+
+    # ConvertAPI HTML to DOCX endpoint
+    url = f"https://v2.convertapi.com/convert/html/to/docx?Secret={CONVERTAPI_KEY}"
+
+    # Prepare the payload
+    payload = {
+        "Parameters":
+        [
+            {
+                "Name": "File",
+                "FileValue": {
+                    "Name": 'myfile.html',
+                    'Data': html_text
+                },
+            },
+        ]
+    }
+
+    # Make the POST request
+    response = anvil.http.request(url, method='POST', json=payload, timeout=30)
+    # Check response status and handle the file
+    if response.status_code == 200:
+        return anvil.media.from_bytes(response.content, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', name='output.docx')
+    else:
+        raise Exception("Error in file conversion")
+
+def create_media_object(docx_data):
+    return anvil.BlobMedia('application/vnd.openxmlformats-officedocument.wordprocessingml.document', docx_data, name="document.docx")
 
 # Anvil server callable functions
 @anvil.server.callable
@@ -149,12 +191,7 @@ def get_background_task_result(task_id):
         return None
 
 @anvil.server.callable
-def convert_markdown_to_docx(markdown_string):
-    # Convert Markdown to DOCX
-    Markdown2docx.convert(markdown_string, docx_bytes)
-
-    # Reset the pointer to the beginning of the BytesIO object
-    docx_bytes.seek(0)
-
-    # Create and return an Anvil media object
-    return anvil.media.from_file(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", name="converted.docx")
+def convert_markdown_to_docx(markdown_text):
+    html_text = markdown_to_html(markdown_text)
+    docx_data = convert_html_to_docx(html_text)
+    return create_media_object(docx_data)

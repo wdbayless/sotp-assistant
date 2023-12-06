@@ -29,4 +29,7 @@ secrets:
   openai_api_key:
     value: {ANK2UV6CBNZEBFBH: q9061Kx1PD8+CP+xevPAnfGNFnr2J84GcJGBiVoYr3rcy/NobcTb9YJx2YpZvAynddnGbshZNK+T+2l2iPQ8u6wVuhu4NHJvKCC3XnruyutlWo99z856VOQFdOJwFF8bouw6XMypqIItuEeLUVmnl1wW05hHDABMuLqaLZtt3G5Zk7qLYsWvd+30IFNURTML+2k=}
     type: secret
+  convertapi_key:
+    value: {ANK2UV6CBNZEBFBH: 5cXTmdhCK8sd6UCjp5IJjpvLTrNhOOYR2vKoNGkRYtUpyZgHngJLvXNy7LBNbHR+hjkkh0EpMbkDDXe9Z5s5eRccEn6lnmdZJZI8L63PEQ+5DFuNzPOZ/r6E1A7bGq8lu/eWsIumpZJH9IVTj+u/}
+    type: secret
 renamed: true
