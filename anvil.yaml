@@ -18,7 +18,15 @@ runtime_options:
   server_spec_disabled: {requirements: '', base: python310-minimal}
 metadata: {title: SOTP Assistant, description: The SOTP Assistant is powered by OpenAI.}
 startup_form: Form1
-db_schema: {}
+db_schema:
+  files:
+    client: none
+    server: full
+    columns:
+    - name: file
+      admin_ui: {order: 0, width: 200}
+      type: media
+    title: files
 secrets:
   tavily_api_key:
     value: {ANK2UV6CBNZEBFBH: 9Xe2xclddbQxV5Wgpbge/aY271R2TD7xbyEiAQBBMYMN7iREJ6uPzN2Fd9nW5dCshu6c19OJlOHPJ2WsoPrUfqgt2TNh1O940IihCUrn4pdbt9TnJPtLp+RO4yyFYu2eKuUTR/WrJIvIPGFNOzrRhtZd4/BsHUmofer5L2nLf8tJFaAW}

@@ -1,11 +1,14 @@
-# Configuration and Initialization
+import anvil.tables as tables
+import anvil.tables.query as q
+from anvil.tables import app_tables
 import anvil.secrets
 import anvil.server
+import anvil.http
+import anvil.media
 
 OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
 TAVILY_API_KEY = anvil.secrets.get_secret('tavily_api_key')
 ASSISTANT_ID = anvil.secrets.get_secret('sotp_assistant_id')
-CLOUDCONVERT_API_KEY = anvil.secrets.get_secret('cloudconvert_api_key')
 
 # Import necessary libraries
 import time
@@ -13,6 +16,7 @@ import json
 from openai import OpenAI
 from tavily import TavilyClient
 import cloudconvert
+import base64
 
 # Define OpenAIClient class
 class OpenAIClient:
@@ -42,7 +46,6 @@ class TavilyClientWrapper:
 # Instantiate clients
 openai_client = OpenAIClient(OPENAI_API_KEY)
 tavily_client = TavilyClientWrapper(TAVILY_API_KEY)
-cloudconvert_client = cloudconvert.configure(api_key='CLOUDCONVERT_API_KEY', sandbox=False)
 
 # Utility functions
 def wait_for_run_completion(client, thread_id, run_id):
@@ -151,22 +154,80 @@ def get_background_task_result(task_id):
 
 @anvil.server.callable
 def convert_markdown_to_docx(markdown_text):
-    print("Converting conversation to DOCX")
-    process = cloudconvert_client.convert({
-        "inputformat": "md",
-        "outputformat": "docx",
-        "input": "raw",
-        "file": markdown_text,
-        "filename": "input.md"
+    # Convert markdown text to byte string
+    markdown_bytes = markdown_text.encode('utf-8')
+
+    # Encode bytes to base64 sstring
+    base64_encoded_str = base64.b64encode(markdown_bytes).decode('utf-8')
+
+    # Instantiate CloudConvert client
+    cloudconvert.configure(api_key=anvil.secrets.get_secret('cloudconvert_api_key'), sandbox=False)
+
+    # Create a CloudConvert job for direct upload
+    job = cloudconvert.Job.create(payload={
+        "tasks": {
+            "upload-file": {
+                "operation": "import/upload"
+            },
+            "convert-to-docx": {
+                "operation": "convert",
+                "input": "upload-file",
+                "output_format": "docx",
+                "engine": "pandoc"
+            },
+            "export-my-file": {
+                "operation": "export/url",
+                "input": "convert-to-docx"
+            }
+        }
     })
 
-    # Wait for the conversion to finish
-    process.wait()
+    # Get the upload URL from the created job
+    # assuming the upload task is the first task in the job
+    upload_task = job['tasks'][0]
+    upload_url = upload_task['result']['form']['url']
 
-    # Download the output file
-    output = process.download()
+    # Upload the file to CloudConvert
+    response = anvil.http.request(upload_url,
+                                  method="POST",
+                                  data=base64_encoded_str,
+                                  headers={"Content-Type": "application/octet-stream"}
+                                 )
 
-    # Convert the output to Anvil's file format for download
-    return anvil.BlobMedia('application/vnd.openxmlformats-officedocument.wordprocessingm1.document',
-                          output,
-                          name="conversation.docx")
+    # Assuming the export task is the final task in the job
+    export_task_id = job['tasks'][-1]['id']
+  
+    # Polling for the conversion job to finish
+    timeout = 120  # seconds
+    poll_interval = 5  # seconds
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        export_task = cloudconvert.Task.find(id=export_task_id)
+        if export_task['status'] == 'finished':
+            print("Export task completed successfully.")
+            break
+        elif export_task['status'] == 'error':
+            raise Exception("Export task encountered an error.")
+        time.sleep(poll_interval)
+    else:
+        raise TimeoutError("Conversion job timed out.")
+
+  # Diagnostic print statement
+    print(f"Completed CloudConvert job object: {job}")
+
+    # Retrieve the DOCX file URL
+    export_task = job['tasks'][-1]
+    download_url = export_task['result']['files'][0]['url']
+
+    # Download the DOCX file using Anvil's HTTP request
+    response = anvil.http.request(download_url, method="GET")
+    docx_file_content = response.get_bytes()
+
+    # Convert to an Anvil Media Object
+    docx_media = anvil.media.from_bytes(docx_file_content, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+    # Delete the temporary .md file from the Anvil data table
+    stored_file.delete()
+
+    return docx_media  
+    
