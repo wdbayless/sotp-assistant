@@ -12,7 +12,7 @@ import time
 import json
 from openai import OpenAI
 from tavily import TavilyClient
-import pypandoc
+from Markdown2docx import Markdown2docx
 
 # Define OpenAIClient class
 class OpenAIClient:
@@ -149,13 +149,12 @@ def get_background_task_result(task_id):
         return None
 
 @anvil.server.callable
-def convert_markdown_to_docx(markdown_text):
-    # Convert markdown text using pypandoc library
-    output = pypandoc.convert_text(markdown_text, 'docx', format='md', outputfile="output.docx")
+def convert_markdown_to_docx(markdown_string):
+    # Convert Markdown to DOCX
+    Markdown2docx.convert(markdown_string, docx_bytes)
 
-    # Convert to an Anvil Media Object
-    with open("output.docx", "rb") as file:
-            docx_media = anvil.media.from_file(from_bytes(docx_file_content, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    # Reset the pointer to the beginning of the BytesIO object
+    docx_bytes.seek(0)
 
-    return docx_media  
-    
+    # Create and return an Anvil media object
+    return anvil.media.from_file(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", name="converted.docx")
