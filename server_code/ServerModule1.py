@@ -1,9 +1,10 @@
+# Configuration and Initialization
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
-# Configuration and Initialization
 import anvil.secrets
 import anvil.server
+import anvil.media
 
 OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
 TAVILY_API_KEY = anvil.secrets.get_secret('tavily_api_key')
@@ -148,3 +149,9 @@ def get_background_task_result(task_id):
     except Exception as e:
         print(f"Error retrieving task result: {e}")
         return None
+
+@anvil.server.callable
+def convert_markdown_to_docx(markdown_text):
+    html_text = markdown_to_html(markdown_text)
+    docx_data = convert_html_to_docx(html_text)
+    return create_media_object(docx_data)
