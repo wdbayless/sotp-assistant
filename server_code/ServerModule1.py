@@ -15,6 +15,7 @@ import time
 import json
 from openai import OpenAI
 from tavily import TavilyClient
+import markdown2
 
 # Define OpenAIClient class
 class OpenAIClient:
@@ -63,6 +64,29 @@ def submit_tool_outputs(client, thread_id, run_id, tools_to_call):
             tool_output_array.append({"tool_call_id": tool.id, "output": output})
 
     return client.client.beta.threads.runs.submit_tool_outputs(thread_id=thread_id, run_id=run_id, tool_outputs=tool_output_array)
+
+def markdown_to_html(markdown_text):
+    # Convert markdown to HTML
+    html = markdown2.markdown(markdown_text)
+
+    # Add the DOCTYPE declaration if it's missing
+    if not html.strip().lower().startswith('<!doctype html>'):
+        html = f'<!DOCTYPE html>\n{html}'
+
+    html_filename = "conversation.html"
+
+    # Create a BlobMedia object from the HTML content
+    html_bytes = html.encode('utf-8')
+    media_object = anvil.BlobMedia('text/html', html_bytes, name=html_filename)
+
+    # Save the BlobMedia object to the 'html_file' field in the 'files' table
+    row = app_tables.files.add_row(html_file=media_object)
+
+    # Get the URL of the saved media object
+    media_url = row['html_file'].get_url()
+
+    print(f"Markdown text converted to HTML and saved as {html_filename} in the Anvil app.")
+    return media_url
 
 # Anvil server callable functions
 @anvil.server.callable

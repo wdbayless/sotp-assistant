@@ -103,7 +103,7 @@ class Form1(Form1Template):
         """This method is called when the download conversation button is clicked."""
         print("Download button clicked.")
         # Format the conversation as markdown
-        markdown_text = "\n\n".join([f"**{m['role'].capitalize()}**:\n{m['value']}" for m in conversation])
+        markdown_text = "\n\n".join([f"**{m['role'].capitalize()}**:\n{m['value']}" for m in self.conversation])
 
         # Call the server function to convert and download the conversation as DOCX
         docx_file = anvil.server.call('convert_markdown_to_docx', markdown_text)
