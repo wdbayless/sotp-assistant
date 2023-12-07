@@ -1,4 +1,4 @@
-# Configuration and Initialization
+# Import required Anvil libraries
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
@@ -6,16 +6,19 @@ import anvil.secrets
 import anvil.server
 import anvil.media
 
-OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
-TAVILY_API_KEY = anvil.secrets.get_secret('tavily_api_key')
-ASSISTANT_ID = anvil.secrets.get_secret('sotp_assistant_id')
-
-# Import necessary libraries
+# Import necessary external libraries
 import time
 import json
 from openai import OpenAI
 from tavily import TavilyClient
 import markdown2
+import convertapi
+
+# Configure API keys and OpenAI Assistant ID
+OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
+TAVILY_API_KEY = anvil.secrets.get_secret('tavily_api_key')
+ASSISTANT_ID = anvil.secrets.get_secret('sotp_assistant_id')
+convertapi.api_secret = anvil.secrets.get_secret('convertapi_secret')
 
 # Define OpenAIClient class
 class OpenAIClient:
@@ -80,13 +83,32 @@ def markdown_to_html(markdown_text):
     media_object = anvil.BlobMedia('text/html', html_bytes, name=html_filename)
 
     # Save the BlobMedia object to the 'html_file' field in the 'files' table
+    # Set visibility to None to allow subsequent access by ConvertAPI
     row = app_tables.files.add_row(html_file=media_object)
 
-    # Get the URL of the saved media object
+    # Get the URL and record_id of the saved media object
     media_url = row['html_file'].get_url()
+    record_id = row.get_id()
 
     print(f"Markdown text converted to HTML and saved as {html_filename} in the Anvil app.")
-    return media_url
+    return record_id, media_url
+
+def convert_html_to_docx(record_id, media_url):
+    # Retrieve the record from the 'files' table using the provided record_id
+    record = app_tables.files.get_by_id(record_id)
+    if record is None:
+        raise ValueError("Record not found in the 'files' table.")
+
+    # Convert the HTML document to DOCX format using ConvertAPI
+    result = convertapi.convert('docx', {'File': media_url}, from_format='html')
+
+    # Save the DOCX file as a media object and store it in the 'docx_file' field
+    docx_media = anvil.BlobMedia('application/vnd.openxmlformats-officedocument.wordprocessingml.document', result.file.read(), name="converted_file.docx")
+    record['docx_file'] = docx_media
+
+    print("HTML document converted to DOCX and saved in the 'files' table.")
+
+    return docx_media
 
 # Anvil server callable functions
 @anvil.server.callable
@@ -176,6 +198,7 @@ def get_background_task_result(task_id):
 
 @anvil.server.callable
 def convert_markdown_to_docx(markdown_text):
-    html_text = markdown_to_html(markdown_text)
-    docx_data = convert_html_to_docx(html_text)
-    return create_media_object(docx_data)
+    record_id, media_url = markdown_to_html(markdown_text)
+    docx_file = convert_html_to_docx(record_id, media_url)
+
+    return docx_file
