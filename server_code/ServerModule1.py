@@ -107,18 +107,7 @@ def convert_html_to_docx(record_id):
     docx_file_url = result.file.url
     print(f"The docx_file_url is: {docx_file_url}")
 
-    # Retrieve the DOCX File from ConvertAPI as bytes
-    docx_file = anvil.http.request(docx_file_url)
-    docx_bytes = docx_file.get_bytes()
-
-    # Save the DOCX file as a media object and store it in the 'docx_file' field
-    docx_media = anvil.BlobMedia(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                 content=docx_bytes,
-                                 name='conversation.docx')
-    record['docx_file'] = docx_media
-
-    print("HTML document converted to DOCX and saved in the 'files' table.")
-    return docx_media
+    return docx_file_url
 
 # Anvil server callable functions
 @anvil.server.callable
@@ -209,8 +198,8 @@ def get_background_task_result(task_id):
 @anvil.server.callable
 def convert_markdown_to_docx(markdown_text):
     record_id = markdown_to_html(markdown_text)
-    docx_file = convert_html_to_docx(record_id)
-    return docx_file
+    docx_file_url = convert_html_to_docx(record_id)
+    return docx_file_url
 
 @anvil.server.http_endpoint('/file-url/:record_id')
 # To make the URL of a file stored in an Anvil table publicly accessible

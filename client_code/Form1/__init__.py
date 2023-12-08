@@ -106,5 +106,7 @@ class Form1(Form1Template):
         markdown_text = "\n\n".join([f"**{m['role'].capitalize()}**:\n{m['value']}" for m in self.conversation])
 
         # Call the server function to convert and download the conversation as DOCX
-        docx_file = anvil.server.call('convert_markdown_to_docx', markdown_text)
-        anvil.media.download(docx_file)
+        docx_file_url = anvil.server.call('convert_markdown_to_docx', markdown_text)
+
+        # Open the URL in a new browser tab/window for downloading
+        anvil.js.window.open(docx_file_url)

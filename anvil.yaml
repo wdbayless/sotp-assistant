@@ -26,9 +26,6 @@ db_schema:
     - name: html_file
       admin_ui: {width: 200, order: 0}
       type: media
-    - name: docx_file
-      admin_ui: {width: 200, order: 1}
-      type: media
     title: files
 secrets:
   tavily_api_key:
