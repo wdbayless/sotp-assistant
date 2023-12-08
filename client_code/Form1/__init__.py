@@ -1,6 +1,10 @@
 from ._anvil_designer import Form1Template
 from anvil import *
+import anvil.tables as tables
+import anvil.tables.query as q
+from anvil.tables import app_tables
 import anvil.server
+import anvil.media
 
 class Form1(Form1Template):
     def __init__(self, **properties):
@@ -94,3 +98,15 @@ class Form1(Form1Template):
     def scroll_to_bottom(self):
         """Scrolls the view to the bottom."""
         self.send_btn.scroll_into_view()
+
+    def download_btn_click(self, **event_args):
+        """This method is called when the download conversation button is clicked."""
+        print("Download button clicked.")
+        # Format the conversation as markdown
+        markdown_text = "\n\n".join([f"**{m['role'].capitalize()}**:\n{m['value']}" for m in self.conversation])
+
+        # Call the server function to convert and download the conversation as DOCX
+        docx_file_url = anvil.server.call('convert_markdown_to_docx', markdown_text)
+
+        # Open the URL in a new browser tab/window for downloading
+        anvil.js.window.open(docx_file_url)

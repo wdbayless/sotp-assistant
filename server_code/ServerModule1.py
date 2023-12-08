@@ -1,16 +1,26 @@
-# Configuration and Initialization
+# Import required Anvil libraries
+import anvil.tables as tables
+import anvil.tables.query as q
+from anvil.tables import app_tables
 import anvil.secrets
 import anvil.server
+import anvil.media
+import anvil.http
 
-OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
-TAVILY_API_KEY = anvil.secrets.get_secret('tavily_api_key')
-ASSISTANT_ID = anvil.secrets.get_secret('sotp_assistant_id')
-
-# Import necessary libraries
+# Import necessary external libraries
 import time
 import json
 from openai import OpenAI
 from tavily import TavilyClient
+import markdown2
+import convertapi
+from io import BytesIO
+
+# Configure API keys and OpenAI Assistant ID
+OPENAI_API_KEY = anvil.secrets.get_secret('openai_api_key')
+TAVILY_API_KEY = anvil.secrets.get_secret('tavily_api_key')
+ASSISTANT_ID = anvil.secrets.get_secret('sotp_assistant_id')
+convertapi.api_secret = anvil.secrets.get_secret('convertapi_secret')
 
 # Define OpenAIClient class
 class OpenAIClient:
@@ -59,6 +69,45 @@ def submit_tool_outputs(client, thread_id, run_id, tools_to_call):
             tool_output_array.append({"tool_call_id": tool.id, "output": output})
 
     return client.client.beta.threads.runs.submit_tool_outputs(thread_id=thread_id, run_id=run_id, tool_outputs=tool_output_array)
+
+def markdown_to_html(markdown_text):
+    # Convert markdown to HTML
+    html = markdown2.markdown(markdown_text)
+
+    # Add the DOCTYPE declaration if it's missing
+    if not html.strip().lower().startswith('<!doctype html>'):
+        html = f'<!DOCTYPE html>\n{html}'
+
+    html_filename = "conversation.html"
+
+    # Create a BlobMedia object from the HTML content
+    html_bytes = html.encode('utf-8')
+    media_object = anvil.BlobMedia('text/html', html_bytes, name=html_filename)
+
+    # Save the BlobMedia object to the 'html_file' field in the 'files' table
+    row = app_tables.files.add_row(html_file=media_object)
+
+    # Get the record_id of the saved media object
+    record_id = row.get_id()
+
+    print(f"Markdown text converted to HTML and saved as {html_filename} in the Anvil app.")
+    return record_id
+
+def convert_html_to_docx(record_id):
+    # Retrieve the record from the 'files' table using the provided record_id
+    record = app_tables.files.get_by_id(record_id)
+    if record is None:
+        raise ValueError ("Record not found in the 'files' table.")
+
+    # Get a publicly accessible URL for the HTML file to pass to ConvertAPI
+    public_file_url = f"{anvil.server.get_api_origin()}/file-url/{record_id}"
+
+    # Convert the HTML document to DOCX format using ConvertAPI
+    result = convertapi.convert('docx', {'File': public_file_url}, from_format='html')
+    docx_file_url = result.file.url
+    print(f"The docx_file_url is: {docx_file_url}")
+
+    return docx_file_url
 
 # Anvil server callable functions
 @anvil.server.callable
@@ -145,3 +194,20 @@ def get_background_task_result(task_id):
     except Exception as e:
         print(f"Error retrieving task result: {e}")
         return None
+
+@anvil.server.callable
+def convert_markdown_to_docx(markdown_text):
+    record_id = markdown_to_html(markdown_text)
+    docx_file_url = convert_html_to_docx(record_id)
+    return docx_file_url
+
+@anvil.server.http_endpoint('/file-url/:record_id')
+# To make the URL of a file stored in an Anvil table publicly accessible
+# it must be exposed via an endpoint.
+def get_public_url(record_id):
+    row = app_tables.files.get_by_id(record_id)
+    if row is not None:
+        # Returning a media object from an endpoint serves it as an HTTP response
+        return row['html_file']
+    else:
+        return anvil.server.HttpResponse(status='404')
