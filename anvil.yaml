@@ -9,14 +9,14 @@ services:
   server_config: {}
 package_name: Christmas_Chatbot
 allow_embedding: true
-name: SOTP Assistant
+name: Paxorus
 runtime_options:
   version: 2
   client_version: '3'
   server_version: python3-sandbox
   server_spec: {base: python310-standard}
   server_spec_disabled: {requirements: '', base: python310-minimal}
-metadata: {title: SOTP Assistant, description: The SOTP Assistant is powered by OpenAI.}
+metadata: {title: Paxorus, description: Paxorus is powered by OpenAI.}
 startup_form: Form1
 db_schema:
   files:
