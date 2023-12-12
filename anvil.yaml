@@ -16,7 +16,7 @@ runtime_options:
   server_version: python3-sandbox
   server_spec: {base: python310-standard}
   server_spec_disabled: {requirements: '', base: python310-minimal}
-metadata: {title: Paxorus, description: Paxorus is powered by OpenAI.}
+metadata: {title: Paxorus, description: Paxorus is powered by OpenAI., logo_img: 'https://humanscalebusiness.org/wp-content/uploads/2023/12/paxorus_icon.png'}
 startup_form: Form1
 db_schema:
   files:
