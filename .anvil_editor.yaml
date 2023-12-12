@@ -6,5 +6,6 @@ unique_ids:
   server_modules:
     ServerModule1: '1636122568043573856626205.4805'
   assets:
+    paxorus_icon.png: '1702401139248721532068975.7343'
     standard-page.html: OV7TFHSHUCUISCT6LM6OLELMIV5T6W4D
     theme.css: MU5535FTDBQ3WYNJIEZQG4PHDX3YB7R5

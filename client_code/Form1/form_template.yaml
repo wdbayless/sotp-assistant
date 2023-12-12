@@ -4,10 +4,15 @@ container:
   properties: {html: '@theme:standard-page.html'}
 components:
 - type: ColumnPanel
-  properties: {col_widths: '{}'}
+  properties: {col_widths: '{"QLQCUO":10,"BZPXQP":50}'}
   name: content_panel
   layout_properties: {slot: default}
   components:
+  - name: logo
+    properties: {source: _/theme/paxorus_icon.png, horizontal_align: left, height: '100'}
+    type: Image
+    layout_properties: {grid_position: 'EXNJOY,QLQCUO', full_width_row: false}
+    data_bindings: []
   - name: rich_text_1
     properties: {content: 'Welcome to Paxorus, powered by [OpenAI Assistants API](https://platform.openai.com/docs/assistants/overview)
         and [Tavily AI](https://tavily.com/). I offer informed responses regarding
