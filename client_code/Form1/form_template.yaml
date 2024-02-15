@@ -48,7 +48,7 @@ components:
       layout_properties: {grid_position: 'PKMNAI,VODVYG'}
       event_bindings: {click: download_btn_click}
     - name: label_1
-      properties: {text: This is version 0.5}
+      properties: {text: This is version 0.6}
       type: Label
       layout_properties: {grid_position: 'UQPMVX,ODROEO'}
 - type: FlowPanel
